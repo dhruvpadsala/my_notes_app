@@ -17,4 +17,4 @@ export const fontMap = {
   PoppinsBlackItalic: require("../../assets/fonts/Poppins-BlackItalic.ttf"),
   PoppinsThinItalic: require("../../assets/fonts/Poppins-ThinItalic.ttf"),
   PoppinsExtraLightItalic: require("../../assets/fonts/Poppins-ExtraLightItalic.ttf"),
-};
+} as const;

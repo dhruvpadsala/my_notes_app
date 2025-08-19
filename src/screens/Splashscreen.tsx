@@ -2,25 +2,55 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { FC, useEffect } from "react";
 import { Image, StyleSheet, Text } from "react-native";
+import { Toast } from "toastify-react-native";
+import { images } from "../constants/images";
+import { api } from "../services/apiClient";
+import { getData, setData } from "../storage/asyncstore";
 import { RootStackParamList } from "../types/Navigationtypes";
+import { RegisterUserRequest, RegisterUserResponse } from "../types/apitypes";
 
 type SplashScreenNavigationProp = NativeStackScreenProps<
   RootStackParamList,
   "Splash"
 >;
 
-const Splashscreen: FC<SplashScreenNavigationProp> = ({ navigation }) => {
+const Splashscreen: FC<SplashScreenNavigationProp> = async ({ navigation }) => {
   useEffect(() => {
-    const timer = setTimeout(() => {
-      navigation.navigate("Notes");
-    }, 900);
-    return () => clearTimeout(timer);
-  }, [navigation]);
+    const register = async () => {
+      try {
+        const userToken = await getData<string>("userToken");
+        console.log("userToken", userToken);
+
+        if (!userToken) {
+          const payload: RegisterUserRequest = {};
+          const data = await api.post<RegisterUserResponse>(
+            "auth/register",
+            payload
+          );
+          if (data.success) {
+            await setData("userToken", data.responseData.data[0].USERID);
+            Toast.success("Registration successful!");
+            navigation.replace("Notes");
+            return;
+          } else {
+            Toast.error("Something went wrong. Please try again.");
+          }
+        } else {
+          navigation.replace("Notes");
+          return;
+        }
+      } catch (error) {
+        Toast.error("Network error. Please check your connection.");
+        console.error(error);
+      }
+    };
+    register();
+  }, []);
 
   return (
-    <LinearGradient colors={["#D8B4FE", "#818CF8"]} style={styles.container}>
+    <LinearGradient colors={["#fdfbfb", "#ebedee"]} style={styles.container}>
       <Image
-        source={require("./../../assets/animations/notepad.gif")} // path from current file
+        source={images.notepad} // path from current file
         style={styles.image}
       />
       <Text style={styles.title}>My Notes</Text>
@@ -46,11 +76,11 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontFamily: "PoppinsSemiBoldItalic",
     marginTop: 20,
-    color: "#fff",
+    color: "#1f2937",
   },
   subtitle: {
     fontSize: 14,
-    color: "#E0E7FF",
+    color: "#4b5563",
     marginTop: 10,
     fontFamily: "PoppinsRegular",
   },
