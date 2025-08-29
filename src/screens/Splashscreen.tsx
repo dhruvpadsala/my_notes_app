@@ -4,6 +4,7 @@ import React, { FC, useEffect } from "react";
 import { Image, StyleSheet, Text } from "react-native";
 import { Toast } from "toastify-react-native";
 import { images } from "../constants/images";
+import { initDB } from "../db/database";
 import { api } from "../services/apiClient";
 import { getData, setData } from "../storage/asyncstore";
 import { RootStackParamList } from "../types/Navigationtypes";
@@ -45,6 +46,10 @@ const Splashscreen: FC<SplashScreenNavigationProp> = async ({ navigation }) => {
       }
     };
     register();
+  }, []);
+
+  useEffect(() => {
+    initDB();
   }, []);
 
   return (

@@ -17,3 +17,11 @@ export async function getData<T>(key: string): Promise<T | null> {
     return null;
   }
 }
+
+export async function clearData() {
+  try {
+    await AsyncStorage.clear();
+  } catch (error) {
+    console.error("AsyncStorage set error:", error);
+  }
+}

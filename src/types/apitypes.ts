@@ -15,11 +15,24 @@ export interface User {
   DISPLAYNAME: string;
   CREATEDAT: string; // from API it's probably a string, not Date
 }
-
+export interface Notes {
+  note_id: Number;
+}
 export interface RegisterUserResponse {
   data: [
     {
       USERID: User[][];
+      DISPLAYNAME: string;
+      CREATEDAT: Date;
+    }
+  ];
+  success: boolean;
+}
+
+export interface NoteSyncResponse {
+  data: [
+    {
+      data: Notes[][];
       DISPLAYNAME: string;
       CREATEDAT: Date;
     }

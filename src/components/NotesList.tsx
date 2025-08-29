@@ -1,5 +1,8 @@
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import React from "react";
-import { FlatList, StyleSheet, Text, View } from "react-native";
+import { FlatList, StyleSheet, Text, TouchableOpacity } from "react-native";
+import { RootStackParamList } from "../types/Navigationtypes";
 
 interface Note {
   note_id: string;
@@ -11,13 +14,22 @@ interface NotesListProps {
   data: Note[];
   isGrid: boolean;
 }
+type NavigationProp = NativeStackNavigationProp<RootStackParamList, "AddNote">;
 
 export const NotesList: React.FC<NotesListProps> = ({ data, isGrid }) => {
+  const { navigate } = useNavigation<NavigationProp>();
+
+  const handleNote = (item: Note) => {
+    navigate("AddNote", { id: item.note_id });
+  };
+
   const renderItem = ({ item }: { item: Note }) => (
-    <View style={styles.card}>
-      <Text style={styles.cardText}>{item.title}</Text>
-      <Text style={styles.cardText}>{item.description}</Text>
-    </View>
+    <TouchableOpacity style={styles.card} onPress={() => handleNote(item)}>
+      {item.title && <Text style={styles.cardTitleText}>{item.title}</Text>}
+      {item.description && (
+        <Text style={styles.cardText}>{item.description}</Text>
+      )}
+    </TouchableOpacity>
   );
   return (
     <FlatList
@@ -49,6 +61,11 @@ const styles = StyleSheet.create({
   },
   cardText: {
     fontFamily: "PoppinsRegular",
+    fontSize: 16,
+    color: "#3F3D2E", // soft dark brown for warmth
+  },
+  cardTitleText: {
+    fontFamily: "PoppinsMedium",
     fontSize: 16,
     color: "#3F3D2E", // soft dark brown for warmth
   },

@@ -1,81 +1,91 @@
-import React, { useEffect, useState } from "react";
-import { SafeAreaView, StyleSheet } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
+import React, { useCallback, useEffect, useState } from "react";
+import { SafeAreaView } from "react-native";
 import FabButton from "../components/FabButton";
 import Header from "../components/Header";
 import { NotesList } from "../components/NotesList";
 import { SearchBar } from "../components/SearchBar";
+import {
+  getNoteofNotSync,
+  getNotes,
+  updateNoteSyncStatus,
+} from "../db/notesModal";
 import { api } from "../services/apiClient";
 import { getData } from "../storage/asyncstore";
+import { NoteSyncResponse } from "../types/apitypes";
 
 const Notesscreen = () => {
   const [isGrid, setIsGrid] = useState(true);
-  const [mynotes, setMynotes] = useState([]);
+  const [mynotes, setMynotes] = useState<any[]>([]);
   const [userToken, setUserToken] = useState<string | null>(null);
 
+  // pagination state
+  const [offset, setOffset] = useState(0);
+  const limit = 10;
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+
+  //get User Token
   useEffect(() => {
     const getUserID = async () => {
       const token = await getData<string>("userToken");
-      console.log("userToken", token);
-      setUserToken(token); // ✅ persist in state
+      setUserToken(token);
     };
     getUserID();
   }, []);
 
+  // change grid
   const onChangeGrid = () => {
     setIsGrid(!isGrid);
   };
 
-  const data = [
-    { id: "1", title: "Card 1 jekmd" },
-    { id: "2", title: "Card 2 nskmxkm s. skmas smsl kms" },
-    { id: "3", title: "Card 3 mlksmskm " },
-    { id: "4", title: "Card 4 kdm mdmsm msm s s skmsmlsmsmms s smsfmms" },
-    { id: "5", title: "Card 5 kmma  mkldm ,dnmdvkmdflmffkmfflfklfkjflkmf" },
-  ];
+  const getNotesDataFromOffline = async () => {
+    const offlineSavednotes = await getNotes(userToken);
+    setToOnlineNote();
+    setMynotes(offlineSavednotes); // 🔄 replace list on reset
+  };
 
-  const getNoteData = async () => {
-    const response = await api.get(`notes/getnotes/${userToken}`);
-    console.log("response==>", response);
-    if (response.success) {
-      setMynotes(response.responseData.data);
+  const setToOnlineNote = async () => {
+    const setToOnlineNoteData = await getNoteofNotSync(userToken);
+    if (setToOnlineNoteData.length > 0) {
+      let payload = {
+        sync_notes: setToOnlineNoteData,
+      };
+      console.log("payload", payload);
+      const data = await api.post<NoteSyncResponse>("notes/syncnotes", payload);
+      console.log("datadata", JSON.stringify(data));
+      if (
+        data?.success &&
+        data?.responseData?.data?.success &&
+        Array.isArray(data?.responseData?.data?.data)
+      ) {
+        const syncedNotes = data.responseData.data.data;
+
+        for (const note of syncedNotes) {
+          await updateNoteSyncStatus(note.note_id, 1); // ✅ set sync=0 in local DB
+        }
+      }
     }
   };
 
-  useEffect(() => {
-    getNoteData();
-  }, [userToken]);
+  useFocusEffect(
+    useCallback(() => {
+      getNotesDataFromOffline();
+    }, [userToken])
+  );
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#FFFBEA" }}>
-      {/* header */}
-
       <Header title="My Notes" isback={false} userprofile={true} />
-
-      {/* search */}
-
       <SearchBar
         placeholder="Search Your Notes "
         isGrid={isGrid}
         onChangeGrid={onChangeGrid}
       />
-
-      {/* FlatList */}
       <NotesList data={mynotes} isGrid={isGrid} />
-
-      {/* Fab Button */}
       <FabButton />
     </SafeAreaView>
   );
 };
 
 export default Notesscreen;
-
-const styles = StyleSheet.create({
-  card: {
-    flex: 1,
-    backgroundColor: "white",
-    padding: 20,
-    margin: 5,
-    borderRadius: 8,
-  },
-});
