@@ -17,15 +17,11 @@ import { NoteSyncResponse } from "../types/apitypes";
 const Notesscreen = () => {
   const [isGrid, setIsGrid] = useState(true);
   const [mynotes, setMynotes] = useState<any[]>([]);
+  const [filteredNotes, setFilteredNotes] = useState<any[]>([]);
   const [userToken, setUserToken] = useState<string | null>(null);
+  const [searchText, setSearchText] = useState("");
 
-  // pagination state
-  const [offset, setOffset] = useState(0);
-  const limit = 10;
-  const [loading, setLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
-
-  //get User Token
+  // get User Token
   useEffect(() => {
     const getUserID = async () => {
       const token = await getData<string>("userToken");
@@ -34,7 +30,7 @@ const Notesscreen = () => {
     getUserID();
   }, []);
 
-  // change grid
+  // toggle grid/list
   const onChangeGrid = () => {
     setIsGrid(!isGrid);
   };
@@ -42,47 +38,66 @@ const Notesscreen = () => {
   const getNotesDataFromOffline = async () => {
     const offlineSavednotes = await getNotes(userToken);
     setToOnlineNote();
-    setMynotes(offlineSavednotes); // 🔄 replace list on reset
+    setMynotes(offlineSavednotes);
+    setFilteredNotes(offlineSavednotes); // default display
   };
 
   const setToOnlineNote = async () => {
     const setToOnlineNoteData = await getNoteofNotSync(userToken);
     if (setToOnlineNoteData.length > 0) {
-      let payload = {
-        sync_notes: setToOnlineNoteData,
-      };
-      console.log("payload", payload);
+      let payload = { sync_notes: setToOnlineNoteData };
       const data = await api.post<NoteSyncResponse>("notes/syncnotes", payload);
-      console.log("datadata", JSON.stringify(data));
+
       if (
         data?.success &&
         data?.responseData?.data?.success &&
         Array.isArray(data?.responseData?.data?.data)
       ) {
         const syncedNotes = data.responseData.data.data;
-
         for (const note of syncedNotes) {
-          await updateNoteSyncStatus(note.note_id, 1); // ✅ set sync=0 in local DB
+          await updateNoteSyncStatus(note.note_id, 1);
         }
       }
     }
   };
 
+  // refresh notes when screen focuses
   useFocusEffect(
     useCallback(() => {
       getNotesDataFromOffline();
     }, [userToken])
   );
 
+  // 🔎 search handler
+  const handleSearch = (text: string) => {
+    setSearchText(text);
+
+    if (!text.trim()) {
+      setFilteredNotes(mynotes);
+      return;
+    }
+
+    const lowerText = text.toLowerCase();
+    const results = mynotes.filter((note) => {
+      const title = note.title?.toLowerCase() || "";
+      const content = note.description?.toLowerCase() || "";
+      return title.includes(lowerText) || content.includes(lowerText);
+    });
+
+    setFilteredNotes(results);
+  };
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#FFFBEA" }}>
-      <Header title="My Notes" isback={false} userprofile={true} />
+      <Header title="Welcome back !" isback={false} userprofile={true} />
       <SearchBar
         placeholder="Search Your Notes "
+        value={searchText}
         isGrid={isGrid}
+        onChangeText={handleSearch}
         onChangeGrid={onChangeGrid}
       />
-      <NotesList data={mynotes} isGrid={isGrid} />
+      <NotesList data={filteredNotes} isGrid={isGrid} />
       <FabButton />
     </SafeAreaView>
   );

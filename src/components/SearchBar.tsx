@@ -32,6 +32,7 @@ export const SearchBar: React.FC<Props> = ({
         placeholder={placeholder || "Search..."}
         value={value}
         onChangeText={onChangeText}
+        autoCorrect={false}
       />
       <TouchableOpacity onPress={onChangeGrid}>
         <Text

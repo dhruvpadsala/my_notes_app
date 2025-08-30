@@ -1,7 +1,7 @@
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { FC, useEffect } from "react";
-import { Image, StyleSheet, Text } from "react-native";
+import { Image, StyleSheet, Text, View } from "react-native";
 import { Toast } from "toastify-react-native";
 import { images } from "../constants/images";
 import { initDB } from "../db/database";
@@ -15,12 +15,11 @@ type SplashScreenNavigationProp = NativeStackScreenProps<
   "Splash"
 >;
 
-const Splashscreen: FC<SplashScreenNavigationProp> = async ({ navigation }) => {
+const Splashscreen: FC<SplashScreenNavigationProp> = ({ navigation }) => {
   useEffect(() => {
     const register = async () => {
       try {
         const userToken = await getData<string>("userToken");
-        console.log("userToken", userToken);
 
         if (!userToken) {
           const payload: RegisterUserRequest = {};
@@ -30,36 +29,35 @@ const Splashscreen: FC<SplashScreenNavigationProp> = async ({ navigation }) => {
           );
           if (data.success) {
             await setData("userToken", data.responseData.data[0].USERID);
-            Toast.success("Registration successful!");
-            navigation.replace("Notes");
-            return;
+
+            setTimeout(() => {
+              navigation.replace("Notes");
+            }, 1000);
           } else {
             Toast.error("Something went wrong. Please try again.");
           }
         } else {
-          navigation.replace("Notes");
-          return;
+          setTimeout(() => {
+            navigation.replace("Notes");
+          }, 1000);
         }
       } catch (error) {
         Toast.error("Network error. Please check your connection.");
         console.error(error);
       }
     };
-    register();
-  }, []);
 
-  useEffect(() => {
+    register();
     initDB();
   }, []);
 
   return (
-    <LinearGradient colors={["#fdfbfb", "#ebedee"]} style={styles.container}>
-      <Image
-        source={images.notepad} // path from current file
-        style={styles.image}
-      />
-      <Text style={styles.title}>My Notes</Text>
-      <Text style={styles.subtitle}>Organize your thoughts beautifully</Text>
+    <LinearGradient colors={["#FFFBEA", "#FFF8D6"]} style={styles.container}>
+      <View style={styles.logoContainer}>
+        <Image source={images.notepad} style={styles.image} />
+        <Text style={styles.title}>My Notes</Text>
+        <Text style={styles.subtitle}>Organize your thoughts beautifully</Text>
+      </View>
     </LinearGradient>
   );
 };
@@ -72,21 +70,24 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  logoContainer: {
+    alignItems: "center",
+  },
   image: {
-    width: 200,
-    height: 200,
+    width: 120,
+    height: 120,
     resizeMode: "contain",
+    marginBottom: 20,
   },
   title: {
-    fontSize: 28,
+    fontSize: 30,
     fontFamily: "PoppinsSemiBoldItalic",
-    marginTop: 20,
     color: "#1f2937",
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 15,
     color: "#4b5563",
-    marginTop: 10,
+    marginTop: 8,
     fontFamily: "PoppinsRegular",
   },
 });
