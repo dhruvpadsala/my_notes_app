@@ -104,6 +104,7 @@ const AddNotescreen = () => {
           placeholderTextColor="#9CA3AF"
           value={title}
           onChangeText={setTitle}
+          autoCorrect={false}
         />
 
         {/* Divider */}
@@ -118,6 +119,7 @@ const AddNotescreen = () => {
           onChangeText={setNote}
           multiline
           textAlignVertical="top"
+          autoCorrect={false}
         />
       </KeyboardAvoidingView>
     </SafeAreaView>
